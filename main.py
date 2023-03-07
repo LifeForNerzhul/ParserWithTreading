@@ -16,6 +16,7 @@ def search(card):
         try:
             html = requests.get(url, headers=headers, timeout=5)
         except:
+            # stop program to not miss error
             print('citilink ошибка, не удалось получить данные по ссылке')
             print('Для продолжения нажмите любую клавишу')
             os.system("pause")
@@ -29,9 +30,8 @@ def search(card):
                 except:
                     name = ('noname')
                 try:
-                    link = ('https://www.citilink.ru') + item.find('div',
-                                                                   class_='ProductCardHorizontal__header-block').find(
-                        'a').get('href')
+                    link = ('https://www.citilink.ru') + item.find(
+                        'div', class_='ProductCardHorizontal__header-block').find('a').get('href')
                 except:
                     link = ('nolink')
                 try:
@@ -44,6 +44,7 @@ def search(card):
                 except:
                     price = ('noprice')
             except:
+                # stop program to not miss error, same in other functions
                 print('citilink ошибка, не удалось обработать данные')
                 print('Для продолжения нажмите любую клавишу')
                 os.system("pause")
@@ -68,7 +69,8 @@ def search(card):
                 try:
                     name = item.find('td', align='left').find('a').text
                 except:
-                    continue  # первый объект не товар
+                    # first object not item, maybe i should add [1::] into cycle =)
+                    continue
                 try:
                     link = ('https://www.xpert.ru') + item.find('a').get('href')
                 except:
@@ -143,9 +145,8 @@ def search(card):
                 except:
                     name = ('noname')
                 try:
-                    link = ('https://www.xcom-shop.ru') + item.find('a',
-                                                                    class_='catalog_item__name catalog_item__name--tiles').get(
-                        'href')
+                    link = ('https://www.xcom-shop.ru') + item.find(
+                        'a', class_='catalog_item__name catalog_item__name--tiles').get('href')
                 except:
                     link = ('nolink')
                 try:
@@ -259,8 +260,8 @@ def search(card):
                 except:
                     name = ('noname')
                 try:
-                    link = 'https://www.regard.ru' + item.find('a', class_='CardText_link__2H3AZ link_black').get(
-                        'href')
+                    link = 'https://www.regard.ru' + item.find(
+                        'a', class_='CardText_link__2H3AZ link_black').get('href')
                 except:
                     link = ('nolink')
                 try:
@@ -284,14 +285,14 @@ def search(card):
             print(card + ': Parsing dns-shop')
 
             soup = BeautifulSoup(html, 'html.parser')
+            # in html code find a block with the cards we need
             items = soup.findAll('div', class_='catalog-product ui-button-widget')
 
             for item in items:
                 try:
                     try:
-                        link = 'https://www.dns-shop.ru' + item.find('a',
-                                                                     class_='catalog-product__name ui-link ui-link_black').get(
-                            'href')
+                        link = 'https://www.dns-shop.ru' + item.find(
+                            'a', class_='catalog-product__name ui-link ui-link_black').get('href')
                     except:
                         link = ('nolink')
                     try:
@@ -307,6 +308,7 @@ def search(card):
                     except:
                         price = ('noprice')
                 except:
+                    # stop program to not miss error
                     print('dns-shop ошибка, не удалось обработать данные')
                     print('Для продолжения нажмите любую клавишу')
                     os.system("pause")
@@ -320,10 +322,8 @@ def search(card):
 
             soup = BeautifulSoup(html, 'html.parser')
 
-            cards_block = soup.find('div',
-                                    class_='content__mainColumn content__itemsLoadingCover js__itemsLoadingCover')
-            # через webdriver и обычный браузер выдаёт разный html, для удобства собираю нужный блок в отдельный элемент
-
+            # many blocks with similar names, specify the desired one
+            cards_block = soup.find('div', class_='content__mainColumn content__itemsLoadingCover js__itemsLoadingCover')
             items = cards_block.findAll('div', class_='indexGoods__item')
 
             for item in items:
@@ -334,9 +334,8 @@ def search(card):
                     except:
                         name = ('noname')
                     try:
-                        link = 'https://onlinetrade.ru' + item.find('a',
-                                                                    class_='indexGoods__item__image js__indexGoods__item__image').get(
-                            'href')
+                        link = 'https://onlinetrade.ru' + item.find(
+                            'a', class_='indexGoods__item__image js__indexGoods__item__image').get('href')
                     except:
                         link = ('nolink')
                     try:
@@ -359,33 +358,40 @@ def search(card):
             print(card + ': onlinetrade ready')
             return data
 
+        # settings for browser
         options = webdriver.FirefoxOptions()
-        options.set_preference('dom.webdriver.enabled',
-                               False)  # некоторая информация вроде headers и вроде пункт перестал работать
-        # options.headless = True # браузер в фоне
+        # line lower don't work in current browser version, only older version
+        options.set_preference('dom.webdriver.enabled', False)
+        # background mode
+        # options.headless = True
         browser = webdriver.Firefox(options=options)
 
         browser.get(link_dict[card]['dns'])
+        # sleep to let scripts work
         time.sleep(6)
         html = browser.page_source
 
         dns(card, html, data)
         original_window = browser.current_window_handle
+        # new tab
         browser.switch_to.new_window('tab')
         browser.get(link_dict[card]['onlinetrade'])
+        # sleep to let scripts work
         time.sleep(6)
         html = browser.page_source
         onlinetrade(card, html, data)
 
+        # close tab and original window
         browser.close()
         browser.switch_to.window(original_window)
-
         browser.quit()
+
         return data
 
     data = []
     headers = headers = (
-    {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/103.0.1'})
+        {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/103.0.1'}
+    )
 
     citilink(card, data, headers)
     xpert(card, data, headers)
@@ -394,6 +400,8 @@ def search(card):
     flash(card, data, headers)
     topcomp(card, data, headers)
     regard(card, data, headers)
+
+    # use selenium for sites that are protected from parsing with requests
     print('Обработка dns и onlinetrade займёт некоторое время, это нормально')
     selen(card, data)
 
@@ -406,6 +414,7 @@ def search(card):
     print(card + ': Ready')
 
 
+# dict for sites and links
 link_dict = ({
     '3060': {
         'citilink': 'https://www.citilink.ru/catalog/videokarty/?pf=discount.any%2Crating.any%2C9368_29nvidiad1d1geforced1rtxd13060&f=discount.any%2Crating.any%2C9368_29nvidiad1d1geforced1rtxd13060%2Cavailable.all',
@@ -431,15 +440,18 @@ link_dict = ({
     }
 })
 
-start1 = time.time()
+start_time = time.time()
 
+# for each card in link_dict, we give own thread
 threads = []
 for card in link_dict:
     thr = threading.Thread(target=search, args=(card,))
-    threads.append(thr)  # записываем какие потоки мы запустили
+    # writing threads that we started
+    threads.append(thr)
     thr.start()
 
-for thr in threads:  # закрываем потоки
+# wait until all threads complete their work
+for thr in threads:
     thr.join()
 
 columns = ['name', 'link', 'price']
@@ -447,15 +459,17 @@ columns = ['name', 'link', 'price']
 df_data_3060 = pd.DataFrame(data_3060, columns=columns)
 df_data_6700xt = pd.DataFrame(data_6700xt, columns=columns)
 
+# path for saving excel file
 path = os.environ
-path = path['USERPROFILE'] + '\Desktop\\testMulti11.xlsx'  # путь сохранения результата в excel файле
+path = path['USERPROFILE'] + '\Desktop\\testMulti11.xlsx'
 
 with pd.ExcelWriter(path) as writer:
     df_data_3060.to_excel(writer, sheet_name='3060', index=False)
     df_data_6700xt.to_excel(writer, sheet_name='6700xt', index=False)
 
+# calculate working time
 finish = time.time()
-print(finish - start1)
+print(finish - start_time)
 
 print('The End')
 
